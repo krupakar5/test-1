@@ -1,0 +1,57 @@
+apiversion: v1
+kind: deployment
+metadata:
+  name: spring
+spec:
+  replicas:1
+  template:
+  metadata:
+  labels:
+    app: spring-version
+spec:
+  containers:
+    name: spring
+    image:centos
+  ports:
+    - name: http
+        containerport: 80
+  env:
+    - name : SPECIAL_KEY
+      valuefrom:
+         configmapkeyref:
+         name: application.properties
+  resource:
+    limit:
+      cpu: 1
+      memory: 512mi
+  request:
+     cpu: 1
+     memory: 512mi
+
+---
+apiversion: v1
+kind: service
+metadata:
+  name: spring
+labels:
+  name: app-spring
+spec:
+  selector:
+     type: nodeport
+       - name: spring
+           containerport: 80
+           targetport: 8080
+---
+apiversion:v1
+kind: ingress
+metadata:
+   name: spring
+
+spec:
+  rules:
+    - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: httpd
+          servicePort: 80
