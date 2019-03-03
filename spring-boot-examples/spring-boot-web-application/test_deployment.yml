@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: spring
-        image: mavenimage:latest
+        image: Sample_java_docker_image:latest
         ports:
         - containerPort: 8080
         resources:
