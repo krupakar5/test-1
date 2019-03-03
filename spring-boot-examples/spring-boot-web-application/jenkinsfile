@@ -1,0 +1,47 @@
+node('master')
+{
+
+    stage('Clone the GitHub Rep')
+    {
+        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/anit345/test.git']]])
+    }
+
+    stage('Build it!!')
+    {
+        sh """
+            pwd
+            ls -lrt
+            /opt/maven/bin/mvn install -f spring-boot-examples/spring-boot-web-application/pom.xml
+        """
+
+    }
+    stage('Docker Image')
+    {
+        sh """
+           cd spring-boot-examples/spring-boot-web-application
+           docker build -t Sample_java_docker_image .
+        """
+    }
+
+    stage('Deploy')
+    {
+        sh """
+        
+            gcloud container clusters get-credentials techocamp-1 --region us-central1
+            
+            #ConfigMaps
+            kubectl create configmap spring-config --from-file=spring-boot-examples/spring-boot-web-application/src/main/resources/application.properties
+            kubectl describe configmaps spring-config
+            
+            #Autoscale at 90% CPU usage
+            kubectl autoscale deployment spring --cpu-percent=50 --min=1 --max=5
+            kubectl get hpa
+            
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/maven-deployment.yml
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/maven-svc.yml
+            
+            
+        """
+
+    }
+}
